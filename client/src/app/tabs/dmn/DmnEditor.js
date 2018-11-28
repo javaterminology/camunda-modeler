@@ -79,8 +79,47 @@ export class DmnEditor extends CachedComponent {
   }
 
   componentDidUpdate() {
-    if (!this.state.importing) {
+    const {
+      onChanged
+    } = this.props;
+
+    const state = this.state;
+
+    const {
+      modeler
+    } = this.getCached();
+
+    const activeViewer = modeler.getActiveViewer(),
+          activeView = modeler.getActiveView();
+
+    if (!state.importing) {
       this.checkImport();
+    }
+
+    let editMenu;
+
+    if (activeView) {
+      if (activeView.type === 'drd') {
+        editMenu = getDmnDrdEditMenu(state);
+      } else if (activeView.type === 'decisionTable') {
+        assign(state, {
+          hasSelection: activeViewer.get('selection').hasSelection()
+        });
+
+        editMenu = getDmnDecisionTableEditMenu(state);
+      } else if (activeView.type === 'literalExpression') {
+        editMenu = getDmnLiteralExpressionEditMenu(state);
+      }
+    }
+
+    const windowMenu = getDmnWindowMenu(state);
+
+    if (typeof onChanged === 'function') {
+      onChanged({
+        ...state,
+        editMenu,
+        windowMenu
+      });
     }
   }
 
@@ -231,14 +270,10 @@ export class DmnEditor extends CachedComponent {
     modeler.getActiveViewer().get('commandStack').redo();
   }
 
-  handleChanged = (event) => {
+  handleChanged = () => {
     const {
       modeler
     } = this.getCached();
-
-    const {
-      onChanged
-    } = this.props;
 
     const activeViewer = modeler.getActiveViewer(),
           activeView = modeler.getActiveView();
@@ -264,8 +299,6 @@ export class DmnEditor extends CachedComponent {
 
     const selectionLength = selection.get().length;
 
-    let editMenu;
-
     if (activeView.type === 'drd') {
       assign(newState, {
         editLabel: !inputActive && !!selectionLength,
@@ -274,26 +307,6 @@ export class DmnEditor extends CachedComponent {
         moveSelection: !inputActive && !!selectionLength,
         removeSelected: false,
         zoom: true
-      });
-
-      editMenu = getDmnDrdEditMenu(newState);
-    } else if (activeView.type === 'decisionTable') {
-      assign(newState, {
-        hasSelection: activeViewer.get('selection').hasSelection()
-      });
-
-      editMenu = getDmnDecisionTableEditMenu(newState);
-    } else if (activeView.type === 'literalExpression') {
-      editMenu = getDmnLiteralExpressionEditMenu(newState);
-    }
-
-    const windowMenu = getDmnWindowMenu(newState);
-
-    if (typeof onChanged === 'function') {
-      onChanged({
-        ...newState,
-        editMenu,
-        windowMenu
       });
     }
 
@@ -311,6 +324,11 @@ export class DmnEditor extends CachedComponent {
 
     onError(error);
   }
+
+  handleModalOpened = () => {
+    this.props.onModal('DEPLOY_DIAGRAM');
+  }
+
 
   checkImport = () => {
     const {
@@ -464,7 +482,7 @@ export class DmnEditor extends CachedComponent {
         <Fill name="toolbar" group="deploy">
           <DropdownButton title="Deploy Current Diagram" items={ [{
             text: 'Deploy Current Diagram',
-            onClick: this.props.onModal.bind(null, 'DEPLOY_DIAGRAM')
+            onClick: this.handleModalOpened
           }] }>
             <Icon name="deploy" />
           </DropdownButton>

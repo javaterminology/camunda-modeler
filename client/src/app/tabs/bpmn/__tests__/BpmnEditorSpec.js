@@ -154,27 +154,25 @@ describe('<BpmnEditor>', function() {
     it('should notify about changes', function() {
 
       // given
-      const changedSpy = (state) => {
+      const changedSpy = sinon.spy();
 
-        // then
-        expect(state).to.include({
-          align: false,
-          copy: false,
-          distribute: false,
-          editLabel: false,
-          find: true,
-          globalConnectTool: true,
-          handTool: true,
-          lassoTool: true,
-          moveCanvas: true,
-          moveToOrigin: true,
-          paste: false,
-          redo: true,
-          removeSelected: false,
-          setColor: false,
-          spaceTool: true,
-          undo: true
-        });
+      const expectedState = {
+        align: false,
+        copy: false,
+        distribute: false,
+        editLabel: false,
+        find: true,
+        globalConnectTool: true,
+        handTool: true,
+        lassoTool: true,
+        moveCanvas: true,
+        moveToOrigin: true,
+        paste: false,
+        redo: false,
+        removeSelected: false,
+        setColor: false,
+        spaceTool: true,
+        undo: false
       };
 
       const cache = new Cache();
@@ -186,8 +184,8 @@ describe('<BpmnEditor>', function() {
               isEmpty: () => true
             },
             commandStack: {
-              canRedo: () => true,
-              canUndo: () => true
+              canRedo: () => false,
+              canUndo: () => false
             },
             selection: {
               get: () => []
@@ -203,8 +201,19 @@ describe('<BpmnEditor>', function() {
         onChanged: changedSpy
       });
 
+      changedSpy.resetHistory();
+
       // when
-      instance.handleChanged();
+      instance.setState(expectedState);
+
+      // then
+      expect(changedSpy).to.be.calledOnce;
+
+      // then
+      const { args } = changedSpy.getCall(0);
+
+      expect(args).lengthOf(1);
+      expect(args[0]).to.include(expectedState);
     });
 
   });
@@ -212,7 +221,7 @@ describe('<BpmnEditor>', function() {
 
   describe('#handleNamespace', function() {
 
-    it('should replace namespace', async function() {
+    it('should replace namespace', function(done) {
 
       // given
       const onAction = action => {
@@ -222,10 +231,17 @@ describe('<BpmnEditor>', function() {
         }
       };
 
-      const changedSpy = newState => {
 
-        // then
-        const { contents } = newState;
+      // when
+      const { instance } = renderEditor(activitiXML, {
+        onAction
+      });
+      const handleImportStub = sinon.stub(instance, 'handleImport');
+
+
+      // then
+      handleImportStub.onFirstCall().callsFake(async () => {
+        const contents = await instance.getXML();
 
         expect(contents).to.exist;
 
@@ -237,17 +253,14 @@ describe('<BpmnEditor>', function() {
 
         expect(contents.includes('activiti:assignee')).to.be.false;
         expect(contents.includes('camunda:assignee')).to.be.true;
-      };
 
-      // when
-      renderEditor(activitiXML, {
-        onAction,
-        onChanged: changedSpy
+        done();
       });
+
     });
 
 
-    it('should NOT replace namespace', async function() {
+    it('should NOT replace namespace', function(done) {
 
       // given
       const onAction = action => {
@@ -257,10 +270,16 @@ describe('<BpmnEditor>', function() {
         }
       };
 
-      const changedSpy = newState => {
+      // when
+      const { instance } = renderEditor(activitiXML, {
+        onAction
+      });
+      const handleImportStub = sinon.stub(instance, 'handleImport');
 
-        // then
-        const { contents } = newState;
+
+      // then
+      handleImportStub.onFirstCall().callsFake(async () => {
+        const contents = await instance.getXML();
 
         expect(contents).to.exist;
 
@@ -272,12 +291,8 @@ describe('<BpmnEditor>', function() {
 
         expect(contents.includes('activiti:assignee')).to.be.true;
         expect(contents.includes('camunda:assignee')).to.be.false;
-      };
 
-      // when
-      renderEditor(activitiXML, {
-        onAction,
-        onChanged: changedSpy
+        done();
       });
     });
 
@@ -530,7 +545,8 @@ function renderEditor(xml, options = {}) {
     onError,
     onImport,
     onLayoutChanged,
-    onModal
+    onModal,
+    isModalOpen
   } = options;
 
   const slotFillRoot = mount(
@@ -544,6 +560,7 @@ function renderEditor(xml, options = {}) {
         onImport={ onImport || noop }
         onLayoutChanged={ onLayoutChanged || noop }
         onModal={ onModal || noop }
+        isModalOpen={ !!isModalOpen }
         cache={ options.cache || new Cache() }
         layout={ layout || {
           minimap: {

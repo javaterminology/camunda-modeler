@@ -289,7 +289,9 @@ export class MultiSheetTab extends CachedComponent {
       id,
       xml,
       layout,
-      onAction
+      onAction,
+      onModal,
+      isModalOpen
     } = this.props;
 
     if (!sheets) {
@@ -318,7 +320,8 @@ export class MultiSheetTab extends CachedComponent {
             onError={ this.handleError }
             onImport={ this.handleImport }
             onLayoutChanged={ this.handleLayoutChanged }
-            onModal={ this.props.onModal }
+            onModal={ onModal }
+            isModalOpen={ isModalOpen }
           />
         </TabContainer>
 

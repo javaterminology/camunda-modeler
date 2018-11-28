@@ -140,15 +140,13 @@ describe('<DmnEditor>', function() {
     it('should notify about changes', function() {
 
       // given
-      const changedSpy = (state) => {
+      const changedSpy = sinon.spy();
 
-        // then
-        expect(state).to.include({
-          editLabel: false,
-          redo: true,
-          removeSelected: false,
-          undo: true
-        });
+      const expectedState = {
+        editLabel: false,
+        redo: false,
+        removeSelected: false,
+        undo: false
       };
 
       const cache = new Cache();
@@ -157,8 +155,8 @@ describe('<DmnEditor>', function() {
         cached: {
           modeler: new DmnModeler({
             commandStack: {
-              canRedo: () => true,
-              canUndo: () => true
+              canRedo: () => false,
+              canUndo: () => false
             },
             selection: {
               get: () => []
@@ -174,8 +172,19 @@ describe('<DmnEditor>', function() {
         onChanged: changedSpy
       });
 
+      changedSpy.resetHistory();
+
       // when
-      instance.handleChanged();
+      instance.setState(expectedState);
+
+      // then
+      expect(changedSpy).to.be.calledOnce;
+
+      // then
+      const { args } = changedSpy.getCall(0);
+
+      expect(args).lengthOf(1);
+      expect(args[0]).to.include(expectedState);
     });
 
   });
@@ -406,7 +415,8 @@ function renderEditor(xml, options = {}) {
     onError,
     onImport,
     onLayoutChanged,
-    onModal
+    onModal,
+    isModalOpen
   } = options;
 
   const slotFillRoot = mount(
@@ -419,6 +429,7 @@ function renderEditor(xml, options = {}) {
         onImport={ onImport || noop }
         onLayoutChanged={ onLayoutChanged || noop }
         onModal={ onModal || noop }
+        isModalOpen={ !!isModalOpen }
         cache={ options.cache || new Cache() }
         layout={ layout || {
           minimap: {

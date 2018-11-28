@@ -26,6 +26,10 @@ class DeployDiagramModal extends React.Component {
     };
   }
 
+  componentDidMount() {
+    this.props.onMenuUpdate();
+  }
+
   handleDeploy = async (event) => {
     event.preventDefault();
 
@@ -114,6 +118,7 @@ class DeployDiagramModal extends React.Component {
 DeployDiagramModal.defaultProps = {
   endpoints: [],
   onEndpointsUpdate: () => {},
+  onMenuUpdate: () => {},
   onDeployError: console.error
 };
 

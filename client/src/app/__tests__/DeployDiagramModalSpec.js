@@ -102,6 +102,18 @@ describe('<DeployDiagramModal>', function() {
   });
 
 
+  it('should update menu when opened', function() {
+    // given
+    const onMenuUpdateSpy = sinon.spy();
+
+    // when
+    shallow(<DeployDiagramModal onMenuUpdate={ onMenuUpdateSpy } />);
+
+    // then
+    expect(onMenuUpdateSpy).to.be.calledOnce;
+  });
+
+
   describe('input events', function() {
     let wrapper,
         instance;

@@ -1278,6 +1278,7 @@ export class App extends Component {
                   onContextMenu={ this.openTabMenu }
                   onAction={ this.triggerAction }
                   onModal={ this.openModal }
+                  isModalOpen={ !!this.state.currentModal }
                   ref={ this.tabRef }
                 />
               }
@@ -1299,6 +1300,7 @@ export class App extends Component {
           onDeploy={ this.handleDeploy }
           onDeployError={ this.handleDeployError }
           onEndpointsUpdate={ this.setEndpoints }
+          onMenuUpdate={ this.updateMenu }
         />
       </div>
     );

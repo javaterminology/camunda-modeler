@@ -36,9 +36,6 @@ import {
   replaceNamespace
 } from './util/namespace';
 
-import {
-  assign
-} from 'min-dash';
 
 const NAMESPACE_URL_ACTIVITI = 'http://activiti.org/bpmn',
       NAMESPACE_URL_CAMUNDA = 'http://camunda.org/schema/1.0/bpmn',
@@ -130,8 +127,29 @@ export class BpmnEditor extends CachedComponent {
   }
 
   componentDidUpdate() {
-    if (!this.state.importing) {
+    const {
+      onChanged
+    } = this.props;
+
+    const state = this.state;
+
+    if (!state.importing) {
       this.checkImport();
+    }
+
+    const contextMenu = getBpmnContextMenu(state);
+
+    const editMenu = getBpmnEditMenu(state);
+
+    const windowMenu = getBpmnWindowMenu(state);
+
+    if (typeof onChanged === 'function') {
+      onChanged({
+        ...state,
+        contextMenu,
+        editMenu,
+        windowMenu
+      });
     }
   }
 
@@ -235,10 +253,6 @@ export class BpmnEditor extends CachedComponent {
         oldNamespacePrefix: NAMESPACE_PREFIX_ACTIVITI,
         oldNamespaceUrl: NAMESPACE_URL_ACTIVITI
       });
-
-      this.handleChanged({
-        xml
-      });
     }
 
     return xml;
@@ -265,19 +279,10 @@ export class BpmnEditor extends CachedComponent {
     }
   }
 
-
-  handleChanged = (event = {}) => {
-    const {
-      xml
-    } = event;
-
+  handleChanged = () => {
     const {
       modeler
     } = this.getCached();
-
-    const {
-      onChanged
-    } = this.props;
 
     const commandStack = modeler.get('commandStack');
     const selection = modeler.get('selection');
@@ -310,25 +315,6 @@ export class BpmnEditor extends CachedComponent {
       undo: commandStack.canUndo(),
       zoom: true
     };
-
-    if (xml) {
-      assign(newState, { contents : xml });
-    }
-
-    const contextMenu = getBpmnContextMenu(newState);
-
-    const editMenu = getBpmnEditMenu(newState);
-
-    const windowMenu = getBpmnWindowMenu(newState);
-
-    if (typeof onChanged === 'function') {
-      onChanged({
-        ...newState,
-        contextMenu,
-        editMenu,
-        windowMenu
-      });
-    }
 
     this.setState(newState);
   }
@@ -473,6 +459,11 @@ export class BpmnEditor extends CachedComponent {
     }
   }
 
+  handleModalOpened = () => {
+    this.props.onModal('DEPLOY_DIAGRAM');
+  }
+
+
   resize = () => {
     const {
       modeler
@@ -482,7 +473,6 @@ export class BpmnEditor extends CachedComponent {
 
     canvas.resized();
   }
-
   render() {
 
     const {
@@ -586,7 +576,7 @@ export class BpmnEditor extends CachedComponent {
         <Fill name="toolbar" group="deploy">
           <DropdownButton title="Deploy Current Diagram" items={ [{
             text: 'Deploy Current Diagram',
-            onClick: this.props.onModal.bind(null, 'DEPLOY_DIAGRAM')
+            onClick: this.handleModalOpened
           }] }>
             <Icon name="deploy" />
           </DropdownButton>
