@@ -60,7 +60,8 @@ const INITIAL_STATE = {
   tabs: [],
   tabState: {},
   logEntries: [],
-  currentModal: null
+  currentModal: null,
+  endpoints: []
 };
 
 
@@ -680,7 +681,8 @@ export class App extends Component {
       activeTab,
       tabs,
       tabLoadingState,
-      layout
+      layout,
+      endpoints
     } = this.state;
 
     const {
@@ -703,7 +705,8 @@ export class App extends Component {
     if (
       activeTab !== prevState.activeTab ||
       tabs !== prevState.tabs ||
-      layout !== prevState.layout
+      layout !== prevState.layout ||
+      endpoints !== prevState.endpoints
     ) {
       this.workspaceChanged();
     }
@@ -726,13 +729,15 @@ export class App extends Component {
     const {
       layout,
       tabs,
-      activeTab
+      activeTab,
+      endpoints
     } = this.state;
 
     onWorkspaceChanged({
       tabs,
       activeTab,
-      layout
+      layout,
+      endpoints
     });
   }
 
@@ -1126,6 +1131,8 @@ export class App extends Component {
 
   setModal = currentModal => this.setState({ currentModal });
 
+  setEndpoints = endpoints => this.setState({ endpoints });
+
   handleDeploy = options => {
     return this.props.globals.backend.send('deploy', { ...options, file: this.state.activeTab.file });
   };
@@ -1287,9 +1294,11 @@ export class App extends Component {
 
         <ModalConductor
           currentModal={ this.state.currentModal }
+          endpoints={ this.state.endpoints }
           onClose={ this.composeAction('close-modal') }
           onDeploy={ this.handleDeploy }
           onDeployError={ this.handleDeployError }
+          onEndpointsUpdate={ this.setEndpoints }
         />
       </div>
     );
