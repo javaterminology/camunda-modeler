@@ -4,6 +4,7 @@ import View from './View';
 import AuthTypes from './AuthTypes';
 
 import errorMessageFunctions from './error-messages';
+import getEditMenu from './getEditMenu';
 
 
 const ENDPOINT_URL_PATTERN = /^https?:\/\/.+/;
@@ -32,6 +33,15 @@ class DeployDiagramModal extends React.Component {
     super(props);
 
     this.state = defaultState;
+  }
+
+  componentDidMount() {
+    this.updateMenu();
+  }
+
+
+  componentDidUpdate() {
+    this.updateMenu();
   }
 
   handleDeploy = async (values, { setSubmitting }) => {
@@ -122,6 +132,12 @@ class DeployDiagramModal extends React.Component {
       } }
       validators={ validators }
     />;
+  }
+
+  updateMenu() {
+    const editMenu = getEditMenu();
+
+    this.props.onMenuUpdate({ editMenu });
   }
 
   saveEndpoint(endpointUrl) {
